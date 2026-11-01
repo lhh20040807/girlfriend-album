@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#fbf8f5">
+<meta name="description" content="刘先生和刘女士回忆相册 —— 一起走过的日子。">
+<title>我们的回忆相册</title>
+
+<!--
+  ============================================================================
+  使用说明（只需要看这三步）
+  ----------------------------------------------------------------------------
+  1. 把照片放进 images 文件夹，按年份分文件夹，例如：
+         images/2023/01.jpg
+         images/2024/01.jpg
+     （文件夹名随意，只要和下面「相册数据配置区」里的路径一致即可）
+
+  2. 向下找到 <script> 里的【① 相册数据配置区】，
+     照着例子的格式，修改 / 新增年份、图片路径、日期和备注文字。
+
+  3. 整个文件直接丢到 GitHub Pages 仓库根目录
+     （images 和 audio 两个文件夹要一起上传）即可。
+
+  想改颜色？看 CSS 里的【第 0 节：配色变量】，只改那几个变量就够了。
+
+  背景音乐：把喜欢的歌放到 audio/bgm.mp3。打开网页会尝试自动播放；
+  如果浏览器不允许（手机首次访问常见），随便点一下或滑一下页面就会开始播。
+  ============================================================================
+-->
+
+<style>
+/* ============================================================
+   第 0 节：配色变量（莫兰迪柔和色系，改这里就能换整体风格）
+   ============================================================ */
+:root{
+  --bg:            #fbf8f5;   /* 页面底色：暖米白 */
+  --ink:           #4a413d;   /* 主文字：深灰棕 */
+  --ink-soft:      #8a7f7a;   /* 次要文字 */
+  --ink-faint:     #b3a49c;   /* 日期等最浅文字 */
+  --rose:          #c9a3a2;   /* 主强调色：灰粉 */
+  --rose-deep:     #a5807f;   /* 深一点的粉 */
+  --sage:          #a9b3a0;   /* 灰绿点缀 */
+  --mist:          #9fabb5;   /* 灰蓝点缀 */
+  --card:          rgba(255,255,255,.74);  /* 年份卡片背景 */
+  --card-border:   rgba(255,255,255,.92);
+  --shadow-sm:     0 2px 10px rgba(74,65,61,.05);
+  --shadow-md:     0 18px 42px -30px rgba(74,65,61,.5), 0 2px 8px rgba(74,65,61,.04);
+  --shadow-lg:     0 28px 50px -30px rgba(74,65,61,.55);
+  --radius-card:   26px;
+  --radius-photo:  18px;
+  --ease:          cubic-bezier(.22,.61,.36,1);
+  --font-sans:     -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                   "Hiragino Sans GB", "Microsoft YaHei", "Source Han Sans SC", sans-serif;
+  --font-serif:    "Iowan Old Style", "Palatino Linotype", "Songti SC", "Noto Serif SC",
+                   Georgia, "Times New Roman", serif;
+}
+
+/* ============================================================
+   第 1 节：基础重置与页面骨架
+   ============================================================ */
+*,*::before,*::after{ box-sizing:border-box; }
+
+html{ scroll-behavior:smooth; -webkit-text-size-adjust:100%; }
+
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:var(--font-sans);
+  color:var(--ink);
+  line-height:1.6;
+  background-color:var(--bg);
+  /* 底色上叠两团极淡的色雾，让页面不显得平板 */
+  background-image:
+    radial-gradient(1100px 620px at 12% -10%, rgba(201,163,162,.30) 0%, rgba(201,163,162,0) 62%),
+    radial-gradient(900px 520px at 92% 2%,  rgba(169,179,160,.26) 0%, rgba(169,179,160,0) 58%),
+    radial-gradient(760px 460px at 60% 100%, rgba(159,171,181,.16) 0%, rgba(159,171,181,0) 60%),
+    linear-gradient(180deg, #fdfaf7 0%, #f7f2ee 100%);
+  background-attachment:fixed;
+  -webkit-font-smoothing:antialiased;
+}
+
+body.no-scroll{ overflow:hidden; }   /* 弹窗打开时锁住页面滚动 */
+
+img{ display:block; max-width:100%; }
+
+button{ font:inherit; color:inherit; }
+
+:focus-visible{ outline:2px solid var(--rose); outline-offset:3px; border-radius:6px; }
+
+.page{
+  max-width:1180px;
+  margin:0 auto;
+  padding:clamp(30px,6vw,66px) clamp(16px,4vw,34px) 72px;
+}
+
+/* ============================================================
+   第 2 节：页头标题
+   ============================================================ */
+.hero{ text-align:center; margin-bottom:clamp(28px,4.5vw,46px); }
+
+.hero__eyebrow{
+  margin:0 0 14px;
+  font-size:11px;
+  letter-spacing:.34em;
+  text-transform:uppercase;
+  color:var(--rose-deep);
+  opacity:.85;
+}
+
+.hero__title{
+  margin:0;
+  font-family:var(--font-serif);
+  font-weight:600;
+  font-size:clamp(28px,5.4vw,44px);
+  letter-spacing:.03em;
+  line-height:1.3;
+  color:#463d39;
+}
+
+/* 标题下的小装饰：细线 + 小心心 */
+.hero__orn{
+  display:flex; align-items:center; justify-content:center; gap:12px;
+  margin:18px auto 16px;
+  max-width:260px;
+  color:var(--rose);
+}
+.hero__orn::before,
+.hero__orn::after{
+  content:"";
+  flex:1; height:1px;
+  background:linear-gradient(90deg, transparent, rgba(201,163,162,.55), transparent);
+}
+.hero__orn svg{ width:15px; height:15px; flex:none; opacity:.9; }
+
+.hero__sub{
+  margin:0 auto;
+  max-width:32em;
+  font-size:clamp(13.5px,1.6vw,15px);
+  color:var(--ink-soft);
+  letter-spacing:.02em;
+}
+
+.hero__stats{
+  margin-top:22px;
+  display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:12px;
+  font-size:12.5px;
+  color:var(--ink-faint);
+  letter-spacing:.08em;
+}
+.hero__stats .dot{ width:3px; height:3px; border-radius:50%; background:var(--rose); opacity:.6; }
+
+/* 「展开 / 收起全部」小按钮 */
+.hero__toggle{
+  margin-left:4px;
+  padding:6px 15px;
+  font-size:12px;
+  letter-spacing:.08em;
+  color:var(--rose-deep);
+  background:rgba(255,255,255,.7);
+  border:1px solid rgba(201,163,162,.42);
+  border-radius:999px;
+  cursor:pointer;
+  transition:background .3s var(--ease), color .3s var(--ease), border-color .3s var(--ease), transform .3s var(--ease);
+}
+.hero__toggle:hover{
+  background:var(--rose);
+  border-color:var(--rose);
+  color:#fff;
+  transform:translateY(-1px);
+}
+
+/* ============================================================
+   第 3 节：年份卡片 + 折叠/展开动画
+   ============================================================ */
+.album{ display:flex; flex-direction:column; gap:clamp(16px,2.4vw,24px); }
+
+.year{
+  background:var(--card);
+  border:1px solid var(--card-border);
+  border-radius:var(--radius-card);
+  box-shadow:var(--shadow-md);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  overflow:hidden;
+  transition:box-shadow .45s var(--ease), transform .45s var(--ease);
+  scroll-margin-top:20px;
+}
+.year:hover{ box-shadow:var(--shadow-lg); }
+
+/* 年份标题栏（整条都可以点击） */
+.year__head{
+  width:100%;
+  display:flex; align-items:center; gap:14px;
+  padding:20px clamp(16px,2.4vw,26px);
+  background:none;
+  border:0;
+  text-align:left;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  transition:background .35s var(--ease);
+}
+.year__head:hover{ background:rgba(255,255,255,.5); }
+
+.year__num{
+  font-family:var(--font-serif);
+  font-size:clamp(24px,3.4vw,32px);
+  font-weight:600;
+  letter-spacing:.04em;
+  line-height:1.1;
+  color:#453c38;
+}
+
+.year__tag{
+  font-size:12.5px;
+  color:var(--ink-faint);
+  letter-spacing:.06em;
+  padding-top:6px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.year__count{
+  margin-left:auto;
+  flex:none;
+  padding:4px 11px;
+  font-size:11.5px;
+  letter-spacing:.06em;
+  color:var(--rose-deep);
+  background:rgba(201,163,162,.16);
+  border-radius:999px;
+}
+
+.year__chevron{
+  flex:none;
+  display:grid; place-items:center;
+  width:28px; height:28px;
+  color:var(--rose-deep);
+  opacity:.75;
+  transition:transform .45s var(--ease), opacity .3s var(--ease);
+}
+.year__chevron svg{ width:16px; height:16px; }
+/* 展开状态：箭头朝上；折叠时转回朝下 */
+.year:not(.is-collapsed) .year__chevron{ transform:rotate(180deg); }
+.year.is-collapsed .year__chevron{ transform:rotate(0deg); }
+
+/* 折叠动画：grid-template-rows 从 1fr → 0fr，高度过渡最平滑 */
+.year__panel{
+  display:grid;
+  grid-template-rows:1fr;
+  transition:grid-template-rows .52s var(--ease);
+}
+.year.is-collapsed .year__panel{ grid-template-rows:0fr; }
+
+.year__inner{
+  overflow:hidden;              /* 折叠时必须，否则内容会溢出来 */
+  opacity:1;
+  transition:opacity .38s var(--ease) .06s;
+}
+.year.is-collapsed .year__inner{ opacity:0; transition-delay:0s; }
+
+/* ============================================================
+   第 4 节：照片网格（Grid 自适应）
+   ============================================================ */
+.year__grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(205px, 1fr));
+  gap:clamp(14px,1.8vw,20px);
+  padding:2px clamp(16px,2.4vw,26px) clamp(20px,2.8vw,28px);
+}
+
+.photo{
+  margin:0;
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+  /* 进入页面时逐张淡入上浮，--i 是第几张，用来做错峰延迟 */
+  animation:rise .6s var(--ease) both;
+  animation-delay:calc(var(--i, 0) * 45ms);
+}
+@keyframes rise{
+  from{ opacity:0; transform:translateY(14px); }
+  to  { opacity:1; transform:translateY(0); }
+}
+
+/* 图片外框：固定 4:5 比例，图片裁切填满，保证网格整齐 */
+.photo__frame{
+  position:relative;
+  display:block;
+  width:100%;
+  aspect-ratio:4 / 5;
+  padding:0;
+  border:0;
+  border-radius:var(--radius-photo);
+  overflow:hidden;
+  cursor:zoom-in;
+  background:linear-gradient(150deg, #f0e5df 0%, #e7ebe3 52%, #e4e9ef 100%);
+  box-shadow:0 10px 22px -16px rgba(74,65,61,.55);
+  transition:transform .48s var(--ease), box-shadow .48s var(--ease);
+  -webkit-tap-highlight-color:transparent;
+}
+.photo__frame:hover{
+  transform:translateY(-5px);
+  box-shadow:0 24px 36px -22px rgba(74,65,61,.6);
+}
+.photo__frame:active{ transform:translateY(-2px) scale(.995); }
+
+.photo__frame img{
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit:cover;
+  transition:transform .8s var(--ease);
+}
+.photo__frame:hover img{ transform:scale(1.055); }
+
+/* 图片底部的一层柔和渐变，hover 时出现，让画面更"沉"一点 */
+.photo__frame::after{
+  content:"";
+  position:absolute; inset:0;
+  background:linear-gradient(180deg, rgba(74,65,61,0) 50%, rgba(74,65,61,.20) 100%);
+  opacity:0;
+  transition:opacity .48s var(--ease);
+  pointer-events:none;
+}
+.photo__frame:hover::after{ opacity:1; }
+
+/* 还没放照片时的占位样式（图片加载失败会自动显示） */
+.photo__ph{
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+  font-size:11.5px;
+  letter-spacing:.16em;
+  color:#a89a93;
+  user-select:none;
+}
+.photo__ph svg{ width:26px; height:26px; opacity:.55; }
+
+/* 放大镜小图标，hover 时浮现 */
+.photo__zoom{
+  position:absolute; right:11px; bottom:11px;
+  display:grid; place-items:center;
+  width:30px; height:30px;
+  border-radius:50%;
+  color:#5d534e;
+  background:rgba(255,255,255,.82);
+  backdrop-filter:blur(4px);
+  opacity:0;
+  transform:translateY(6px) scale(.9);
+  transition:opacity .4s var(--ease), transform .4s var(--ease);
+  pointer-events:none;
+}
+.photo__zoom svg{ width:14px; height:14px; }
+.photo__frame:hover .photo__zoom{ opacity:1; transform:translateY(0) scale(1); }
+
+/* 图片下方的文字：日期 + 备注 */
+.photo__cap{ padding:0 3px; }
+.photo__date{
+  font-size:11px;
+  letter-spacing:.12em;
+  color:var(--ink-faint);
+}
+.photo__note{
+  margin:3px 0 0;
+  font-size:13.5px;
+  line-height:1.62;
+  color:#5f5550;
+  overflow-wrap:anywhere;
+}
+
+/* 空年份提示 */
+.year__empty{
+  margin:0;
+  padding:6px clamp(16px,2.4vw,26px) 26px;
+  font-size:13px;
+  color:var(--ink-faint);
+  letter-spacing:.06em;
+}
+
+/* ============================================================
+   第 5 节：页脚
+   ============================================================ */
+.footer{
+  margin-top:clamp(38px,6vw,60px);
+  text-align:center;
+  font-size:12px;
+  letter-spacing:.1em;
+  color:var(--ink-faint);
+}
+.footer span{ color:var(--rose-deep); }
+
+/* ============================================================
+   第 6 节：图片放大弹窗（Lightbox）
+   ============================================================ */
+.lightbox{
+  position:fixed; inset:0;
+  z-index:100;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:14px;
+  padding:clamp(16px,4vw,40px);
+  background:rgba(56,48,45,.74);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  opacity:0;
+  visibility:hidden;
+  transition:opacity .34s var(--ease), visibility .34s var(--ease);
+}
+.lightbox.is-open{ opacity:1; visibility:visible; }
+
+.lightbox__stage{
+  display:flex; flex-direction:column; align-items:center;
+  min-width:0;                  /* 防止内容把弹窗撑出屏幕 */
+  max-width:min(94vw, 1040px);
+  transform:scale(.94);
+  opacity:.35;
+  transition:transform .48s var(--ease), opacity .34s var(--ease);
+}
+.lightbox.is-open .lightbox__stage{ transform:scale(1); opacity:1; }
+
+.lightbox__img{
+  min-width:0;                  /* 图片未加载时也不会撑破屏幕 */
+  max-width:100%;
+  max-height:min(70vh, 780px);
+  width:auto; height:auto;
+  border-radius:14px;
+  background:#f7f2ee;
+  box-shadow:0 34px 70px -34px rgba(0,0,0,.75);
+}
+
+.lightbox__cap{
+  margin-top:16px;
+  width:100%;
+  max-width:min(94vw, 720px);
+  text-align:center;
+}
+.lightbox__date{
+  font-size:11px;
+  letter-spacing:.16em;
+  color:rgba(255,255,255,.62);
+}
+.lightbox__note{
+  margin:6px 0 0;
+  font-size:15px;
+  line-height:1.7;
+  color:#fbf6f2;
+  overflow-wrap:break-word;
+}
+
+/* 关闭按钮 */
+.lightbox__close{
+  position:absolute; top:calc(14px + env(safe-area-inset-top)); right:14px;
+  z-index:2;
+  display:grid; place-items:center;
+  width:42px; height:42px;
+  padding:0;
+  border:1px solid rgba(255,255,255,.42);
+  border-radius:50%;
+  color:#fff;
+  background:rgba(255,255,255,.20);
+  box-shadow:0 6px 18px rgba(0,0,0,.22);
+  cursor:pointer;
+  transition:background .3s var(--ease), transform .3s var(--ease), border-color .3s var(--ease);
+}
+.lightbox__close:hover{ background:rgba(255,255,255,.24); transform:rotate(90deg); }
+.lightbox__close svg{ width:16px; height:16px; }
+
+/* 左右切换按钮 */
+.lightbox__nav{
+  position:absolute; top:50%;
+  transform:translateY(-50%);
+  display:grid; place-items:center;
+  width:46px; height:46px;
+  padding:0;
+  border:1px solid rgba(255,255,255,.26);
+  border-radius:50%;
+  color:#fff;
+  background:rgba(255,255,255,.11);
+  cursor:pointer;
+  transition:background .3s var(--ease), transform .3s var(--ease), opacity .3s var(--ease);
+}
+.lightbox__nav:hover{ background:rgba(255,255,255,.24); }
+.lightbox__nav svg{ width:17px; height:17px; }
+.lightbox__nav--prev{ left:clamp(8px,2.4vw,28px); }
+.lightbox__nav--next{ right:clamp(8px,2.4vw,28px); }
+.lightbox__nav--prev:hover{ transform:translateY(-50%) translateX(-2px); }
+.lightbox__nav--next:hover{ transform:translateY(-50%) translateX(2px); }
+.lightbox__nav:disabled{ opacity:.25; cursor:default; }
+
+/* 序号 3 / 16 */
+.lightbox__count{
+  position:absolute; top:calc(22px + env(safe-area-inset-top)); left:50%;
+  transform:translateX(-50%);
+  font-size:11.5px;
+  letter-spacing:.2em;
+  color:rgba(255,255,255,.6);
+}
+
+/* ============================================================
+   第 6.5 节：右下角背景音乐按钮 + 轻提示
+   ============================================================ */
+.music{
+  position:fixed;
+  right:calc(18px + env(safe-area-inset-right));
+  bottom:calc(20px + env(safe-area-inset-bottom));
+  z-index:90;                      /* 低于弹窗(100)，看大图时不会挡住 */
+  display:grid; place-items:center;
+  width:54px; height:54px;
+  padding:0;
+  border:1px solid rgba(201,163,162,.55);
+  border-radius:50%;
+  color:var(--rose-deep);
+  background:rgba(255,255,255,.82);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  box-shadow:0 14px 28px -16px rgba(74,65,61,.6), 0 2px 6px rgba(74,65,61,.06);
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  transition:transform .35s var(--ease), box-shadow .35s var(--ease),
+             background .35s var(--ease), border-color .35s var(--ease);
+}
+.music:hover{
+  transform:translateY(-3px);
+  background:#fff;
+  border-color:var(--rose);
+  box-shadow:0 20px 34px -18px rgba(74,65,61,.65);
+}
+.music:active{ transform:scale(.95); }
+
+/* 两个图标叠在一起，靠透明度切换（播放中显示暂停键） */
+.music__icon{
+  position:absolute;
+  width:20px; height:20px;
+  transition:opacity .3s var(--ease), transform .38s var(--ease);
+}
+.music__icon--pause{ opacity:0; transform:scale(.6) rotate(-25deg); }
+.music.is-playing .music__icon--play{ opacity:0; transform:scale(.6) rotate(25deg); }
+.music.is-playing .music__icon--pause{ opacity:1; transform:scale(1) rotate(0); }
+
+/* 播放时外面一圈缓慢旋转的虚线，温柔地提示「正在放歌」 */
+.music__ring{
+  position:absolute; inset:-5px;
+  border:1px dashed rgba(201,163,162,.65);
+  border-radius:50%;
+  opacity:0;
+  transition:opacity .4s var(--ease);
+  pointer-events:none;
+}
+.music.is-playing .music__ring{ opacity:1; animation:musicSpin 12s linear infinite; }
+@keyframes musicSpin{ to{ transform:rotate(360deg); } }
+
+/* 自动播放被浏览器拦下时：按钮外圈扩散一圈柔光，轻轻提示「点我一下」 */
+.music.is-invite::after{
+  content:"";
+  position:absolute; inset:-5px;
+  border-radius:50%;
+  border:1px solid rgba(201,163,162,.55);
+  animation:inviteRipple 2.4s ease-out infinite;
+  pointer-events:none;
+}
+@keyframes inviteRipple{
+  0%  { transform:scale(.92); opacity:.75; }
+  70% { transform:scale(1.38); opacity:0; }
+  100%{ transform:scale(1.38); opacity:0; }
+}
+
+/* 轻提示：音乐没加载出来时在按钮上方浮一句话 */
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:calc(88px + env(safe-area-inset-bottom));
+  z-index:95;
+  max-width:78vw;
+  padding:9px 17px;
+  border-radius:999px;
+  font-size:12.5px;
+  letter-spacing:.04em;
+  line-height:1.5;
+  text-align:center;
+  color:#fff;
+  background:rgba(74,65,61,.9);
+  box-shadow:0 12px 26px -14px rgba(0,0,0,.6);
+  opacity:0;
+  transform:translate(-50%, 8px);
+  pointer-events:none;
+  transition:opacity .32s var(--ease), transform .32s var(--ease);
+}
+.toast.is-show{ opacity:1; transform:translate(-50%, 0); }
+
+/* ============================================================
+   第 7 节：响应式适配（手机优先考虑）
+   ============================================================ */
+@media (max-width: 700px){
+  .year__grid{
+    grid-template-columns:repeat(2, minmax(0,1fr));   /* 手机固定两列 */
+    gap:12px;
+    padding:0 14px 20px;
+  }
+  .year__head{ padding:16px 16px; gap:10px; }
+  .year__num{ font-size:23px; }
+  .year__tag{ display:none; }               /* 手机上小标语太挤，先隐藏 */
+  .year__chevron{ width:24px; height:24px; }
+  .year__count{ font-size:11px; padding:3px 9px; }
+
+  .photo__note{ font-size:12.5px; line-height:1.55; }
+  .photo__date{ font-size:10.5px; }
+  .photo__frame{ border-radius:14px; }
+  .photo__zoom{ display:none; }             /* 触屏没有 hover，隐藏放大镜 */
+
+  /* 弹窗：切换按钮移到底部，避免盖住图片 */
+  .lightbox__nav{
+    top:auto; bottom:calc(18px + env(safe-area-inset-bottom));
+    transform:none;
+    width:42px; height:42px;
+  }
+  .lightbox__nav--prev{ left:calc(50% - 58px); }
+  .lightbox__nav--next{ right:calc(50% - 58px); }
+  .lightbox__nav--prev:hover,
+  .lightbox__nav--next:hover{ transform:none; }
+  .lightbox__img{ max-height:62vh; }
+  .lightbox__stage{ padding-bottom:56px; }
+  .lightbox__count{ top:calc(18px + env(safe-area-inset-top)); }
+
+  /* 手机上音乐按钮稍小一点，位置更贴边 */
+  .music{
+    width:48px; height:48px;
+    right:calc(14px + env(safe-area-inset-right));
+    bottom:calc(16px + env(safe-area-inset-bottom));
+  }
+  .music__icon{ width:18px; height:18px; }
+  .toast{ bottom:calc(78px + env(safe-area-inset-bottom)); font-size:12px; }
+}
+
+/* 尊重系统「减少动态效果」设置 */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+    scroll-behavior:auto !important;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="page">
+
+  <!-- 页头：想改标题 / 副标题，直接改这三行文字 -->
+  <header class="hero">
+    <p class="hero__eyebrow">Our Years Together</p>
+    <h1 class="hero__title">刘先生和刘女士的回忆相册</h1>
+    <div class="hero__orn" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.6-9.1C.9 8.4 2.6 5 6 5c2 0 3.4 1.1 4.2 2.2L12 9l1.8-1.8C14.6 6.1 16 5 18 5c3.4 0 5.1 3.4 3.6 6.9C19.5 16.4 12 21 12 21z"/></svg>
+    </div>
+    <p class="hero__sub">把一起走过的日子，一页一页，收进这个小小的抽屉里。</p>
+
+    <div class="hero__stats">
+      <span id="statYears">0 个年份</span>
+      <i class="dot" aria-hidden="true"></i>
+      <span id="statPhotos">0 张照片</span>
+      <button class="hero__toggle" id="toggleAll" type="button">收起全部</button>
+    </div>
+  </header>
+
+  <!-- 相册容器：内容由页面底部的 JS 根据数据自动生成，不需要手动写 HTML -->
+  <main class="album" id="albumRoot"></main>
+
+  <footer class="footer">
+    我们的回忆 · 未完待续 <span>♥</span>
+  </footer>
+
+</div>
+
+<!-- ============================================================
+     背景音乐
+     ------------------------------------------------------------
+     · 换歌：把新歌命名成 bgm.mp3 覆盖 audio/bgm.mp3 即可
+     · 或者直接改下面 <audio> 里的 src="audio/bgm.mp3"
+     · preload="none"：先不下载，点了按钮才开始加载，手机流量更省
+     · loop：自动循环播放
+     · 没有 autoplay 属性 —— 自动播放在 JS 里用 bgm.play() 尝试，
+       被浏览器拦下时会等用户第一次点击/滑动再播放（见脚本第 ⑤ 节）
+     ============================================================ -->
+<audio id="bgm" src="audio/bgm.mp3" loop preload="none"></audio>
+
+<button class="music" id="musicBtn" type="button"
+        aria-label="播放背景音乐" aria-pressed="false" title="播放 / 暂停背景音乐">
+  <span class="music__ring" aria-hidden="true"></span>
+  <!-- 暂停状态下显示的「播放」三角 -->
+  <svg class="music__icon music__icon--play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M9 6.2c0-.8.9-1.3 1.6-.9l8 5.8c.6.4.6 1.4 0 1.8l-8 5.8c-.7.4-1.6-.1-1.6-.9V6.2z"/>
+  </svg>
+  <!-- 播放状态下显示的「暂停」双竖条 -->
+  <svg class="music__icon music__icon--pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <rect x="7.5" y="6" width="3.4" height="12" rx="1.7"/>
+    <rect x="13.1" y="6" width="3.4" height="12" rx="1.7"/>
+  </svg>
+</button>
+
+<!-- 轻提示（音乐文件缺失时才会出现） -->
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- 图片放大弹窗：结构固定，不用改 -->
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-hidden="true" aria-label="照片预览">
+  <span class="lightbox__count" id="lbCount"></span>
+
+  <button class="lightbox__close" id="lbClose" type="button" aria-label="关闭预览">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+
+  <div class="lightbox__stage" id="lbStage">
+    <img class="lightbox__img" id="lbImg" src="" alt="">
+    <div class="lightbox__cap">
+      <div class="lightbox__date" id="lbDate"></div>
+      <p class="lightbox__note" id="lbNote"></p>
+    </div>
+  </div>
+
+  <button class="lightbox__nav lightbox__nav--prev" id="lbPrev" type="button" aria-label="上一张">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+  </button>
+  <button class="lightbox__nav lightbox__nav--next" id="lbNext" type="button" aria-label="下一张">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
+  </button>
+</div>
+
+<script>
+/* ============================================================
+   ① 相册数据配置区  ★ 你平时只需要改这里 ★
+   ------------------------------------------------------------
+   · 新增一年：复制一个 { year: ..., tag: ..., photos: [...] } 整块，
+     粘在最前面（数组顺序 = 页面从上到下的顺序）。
+   · 新增一张：在 photos 里复制一行，改 src / date / note。
+   · src   图片路径，相对路径，不要以 / 开头
+   · date  显示在备注上方的小字，可以写拍摄日期，也可以留空 ""
+   · note  照片下的备注：回忆故事、情话，想写多长都行
+   ============================================================ */
+const ALBUM_DATA = [
+  {
+    year: '2026',
+    tag: '今年也一起',          // 年份右边的小标语（手机上会自动隐藏）
+    photos: [
+      { src: 'images/2026/01.jpg', note: '成都满满回忆呢。' },
+      { src: 'images/2026/02.jpg',note: '国宝熊猫和我家国宝，嘻嘻。' },
+      { src: 'images/2026/03.jpg',  note: '九寨沟漂亮餐。' },
+      { src: 'images/2026/04.jpg',  note: '好美的色调呀。' },
+      { src: 'images/2026/05.jpg',  note: '景美，人更美。' },
+      { src: 'images/2026/06.jpg',  note: '九寨沟太美啦。' },
+      { src: 'images/2026/07.jpg',  note: '宝宝太美了，这套小裙子也好好看。' },
+      { src: 'images/2026/08.jpg',  note: '珠海一日游嘻嘻。' },
+      { src: 'images/2026/09.jpg',  note: '澳门，也很好玩哦。' },
+      { src: 'images/2026/10.jpg',  note: '长沙两个大馋猪，吃吃吃，哈哈。' },
+      { src: 'images/2026/11.jpg',  note: '属于我们的漂亮饭。' },
+      { src: 'images/2026/12.jpg',  note: '宝宝又来找我啦，美美出片。' },
+      { src: 'images/2026/13.jpg',  note: '这张也好好看。' },
+      { src: 'images/2026/14.jpg',  note: '宝宝生日快乐呢。' }
+    ]
+  },
+  {
+    year: '2025',
+    tag: '在一起的第5年',
+    photos: [
+      { src: 'images/2025/01.jpg',  note: '一起去看广州塔，嘻嘻' },
+      { src: 'images/2025/02.jpg',  note: '我家小老虎会咬人' },
+      { src: 'images/2025/03.jpg', note: '广州动物园拍的也好好看。' },
+      { src: 'images/2025/04.jpg',  note: '笑的牙齿八彻，哈哈。' },
+      { src: 'images/2025/05.jpg', note: '谁把我就小宝宝气哭了。' },
+      { src: 'images/2025/06.jpg',  note: '宝宝第一次来我学院拍的，简单的幸福。' },
+      { src: 'images/2025/07.jpg', note: '耶！' },
+      { src: 'images/2025/08.jpg',  note: '我家宝宝好好看' },
+      { src: 'images/2025/09.jpg',  note: '买了好看裙子，准备去海边玩。' },
+      { src: 'images/2025/10.jpg', note: '谁家美人鱼那么好看呢。' },
+      { src: 'images/2025/11.jpg', note: '顺德玩，拍的好好看。' },
+      { src: 'images/2025/12.jpg',  note: '厦门，这一年去了好多地方呢，嘻嘻。' }
+     
+    ]
+  },
+  {
+    year: '2024',
+    tag: '在一起的第四年',
+    photos: [
+      { src: 'images/2024/01.jpg', note: '去梅县玩，ljm拍的还不错' },
+      { src: 'images/2024/02.jpg',note: '这张也很好看。' },
+      { src: 'images/2024/03.jpg',  note: '好像是高三最后一次去奥园约会。' },
+      { src: 'images/2024/04.jpg',  note: '在一起三年咯，嘻嘻。' },
+      { src: 'images/2024/05.jpg',  note: '大梅沙，第一次看海，跟宝宝。' },
+      { src: 'images/2024/06.jpg',  note: '三周年买的戒指。' },
+      { src: 'images/2024/07.jpg',  note: '好怀念那个时候。' },
+      { src: 'images/2024/08.jpg',  note: '暑假跟宝宝出来玩。' },
+      { src: 'images/2024/09.jpg',  note: '宝宝大学第一次出去玩给我发的美照。' },
+      { src: 'images/2024/10.jpg',  note: '第一次搭高铁，大学第一次去找宝宝，好紧张。' },
+      { src: 'images/2024/11.jpg',  note: '第一次去宝宝学校的时候拍的，嘻嘻。' },
+      { src: 'images/2024/12.jpg',  note: '宝宝跨年给我发的美照' }
+    ]
+  },
+  {
+    year: '2023',
+    tag: '在一起的第3年',
+    photos: [
+      { src: 'images/2023/01.jpg',  note: '相机拍的，好稚嫩。' },
+      { src: 'images/2023/02.jpg', note: '怎么把我拍的想女的，哈哈' },
+      { src: 'images/2023/03.jpg',  note: '校服合照，好好看。' },
+      { src: 'images/2023/04.jpg', note: '这张也特别有感觉。' },
+      { src: 'images/2023/05.jpg',  note: '好美的背影呀。' },
+      { src: 'images/2023/06.jpg',  note: '亲亲宝宝。' },
+      { src: 'images/2023/07.jpg',  note: '电影院美美出片。' },
+      { src: 'images/2023/08.jpg',  note: '给宝宝系鞋带，被拍下来了，嘻嘻。' },
+      { src: 'images/2023/09.jpg',  note: '漂亮饭。' },
+      { src: 'images/2023/10.jpg', note: '好像是第一次一起看电影，没带3d眼镜，哈哈。' }
+      
+      
+    ]
+  },
+{
+    year: '2022',
+    tag: '在一起的第2年',
+    photos: [
+      { src: 'images/2022/01.jpg', note: '好有感觉的照片呢。' },
+      { src: 'images/2022/02.jpg', note: '影子照也好好看。' },
+      { src: 'images/2022/03.jpg',note: '宝宝的臭美，哈哈' },
+      { src: 'images/2022/04.jpg',  note: '大手牵小手。' },
+      { src: 'images/2022/05.jpg',  note: '比心。' },
+      { src: 'images/2022/06.jpg',  note: '宝宝给我发的伴娘照，也美美哒。' }
+    ]
+  },
+
+  {
+    year: '2021',
+    tag: '故事开始的时刻',
+    photos: [
+      { src: 'images/2021/01.jpg',  note: '第一次一起走，好紧张，不知道说些什么。' },
+      { src: 'images/2021/02.jpg',note: '送宝宝的第一个礼物，可可爱爱。' },
+      { src: 'images/2021/03.jpg',  note: '这一张好像是100天拍的，嘻嘻' },
+      { src: 'images/2021/04.jpg', note: '第一次奥园约会，都好好看，怀念。' },
+      { src: 'images/2021/05.jpg', note: '宝宝发的美照。' }
+    ]
+  },
+
+  
+];
+
+/* ============================================================
+   ② 渲染逻辑 —— 一般不需要改，除非你想加新功能
+   ============================================================ */
+
+// 把「按年份分组」的数据拍平成一维数组，方便弹窗里上一张 / 下一张
+const FLAT_PHOTOS = [];
+ALBUM_DATA.forEach(function (group) {
+  (group.photos || []).forEach(function (photo) {
+    FLAT_PHOTOS.push({
+      src: photo.src,
+      date: photo.date || '',
+      note: photo.note || '',
+      year: group.year
+    });
+  });
+});
+
+const albumRoot  = document.getElementById('albumRoot');
+const lightbox   = document.getElementById('lightbox');
+const lbImg      = document.getElementById('lbImg');
+const lbDate     = document.getElementById('lbDate');
+const lbNote     = document.getElementById('lbNote');
+const lbCount    = document.getElementById('lbCount');
+const lbPrev     = document.getElementById('lbPrev');
+const lbNext     = document.getElementById('lbNext');
+const lbClose    = document.getElementById('lbClose');
+const toggleAll  = document.getElementById('toggleAll');
+
+let currentIndex = 0;      // 弹窗当前显示第几张
+let allCollapsed = false;  // 「全部收起」状态
+
+// 小工具：把用户输入的文字转义，避免备注里出现 < > " 时页面错乱
+function esc(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/* ---------- 渲染一个年份区块 ---------- */
+function buildYearSection(group) {
+  const photos = group.photos || [];
+  const section = document.createElement('section');
+  // 关键：刚打开网站时每一年都是折叠状态（有 is-collapsed 就是折叠）
+  section.className = 'year is-collapsed';
+  section.dataset.year = group.year;
+
+  // 这张照片在全站里的序号（给弹窗用）
+  let startIndex = 0;
+  for (let i = 0; i < ALBUM_DATA.length; i++) {
+    if (ALBUM_DATA[i].year === group.year) break;
+    startIndex += (ALBUM_DATA[i].photos || []).length;
+  }
+
+  const photosHTML = photos.map(function (photo, i) {
+    const idx = startIndex + i;
+    const note = photo.note || '';
+    return '' +
+      '<figure class="photo" style="--i:' + Math.min(i, 8) + '">' +
+        '<button class="photo__frame" type="button" data-index="' + idx + '" ' +
+                'aria-label="放大查看：' + esc(note || ('照片 ' + (i + 1))) + '">' +
+          '<span class="photo__ph" aria-hidden="true">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">' +
+              '<rect x="3" y="6" width="18" height="14" rx="3"/>' +
+              '<circle cx="12" cy="13" r="3.2"/>' +
+              '<path d="M8.5 6l1.2-2h4.6L15.5 6" stroke-linecap="round"/>' +
+            '</svg>' +
+            '<span>照片待添加</span>' +
+          '</span>' +
+          '<img src="' + esc(photo.src) + '" alt="' + esc(note || (group.year + ' 的回忆')) + '" ' +
+               'loading="lazy" decoding="async">' +
+          '<span class="photo__zoom" aria-hidden="true">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">' +
+              '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>' +
+              '<path d="M11 8.5v5M8.5 11h5"/>' +
+            '</svg>' +
+          '</span>' +
+        '</button>' +
+        '<figcaption class="photo__cap">' +
+          (photo.date ? '<div class="photo__date">' + esc(photo.date) + '</div>' : '') +
+          (note ? '<p class="photo__note">' + esc(note) + '</p>' : '') +
+        '</figcaption>' +
+      '</figure>';
+  }).join('');
+
+  section.innerHTML = '' +
+    '<button class="year__head" type="button" aria-expanded="false">' +
+      '<span class="year__num">' + esc(group.year) + '</span>' +
+      (group.tag ? '<span class="year__tag">' + esc(group.tag) + '</span>' : '') +
+      '<span class="year__count">' + photos.length + ' 张</span>' +
+      '<span class="year__chevron" aria-hidden="true">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+             'stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>' +
+      '</span>' +
+    '</button>' +
+    '<div class="year__panel">' +
+      '<div class="year__inner">' +
+        (photos.length
+          ? '<div class="year__grid">' + photosHTML + '</div>'
+          : '<p class="year__empty">这一年还没有照片，等你去放一张。</p>') +
+      '</div>' +
+    '</div>';
+
+  /* --- 折叠 / 展开：点击年份标题栏 --- */
+  const head = section.querySelector('.year__head');
+  head.addEventListener('click', function () {
+    const collapsed = section.classList.toggle('is-collapsed');
+    head.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    syncToggleAllLabel();
+  });
+
+  /* --- 点击图片：打开弹窗 --- */
+  section.querySelectorAll('.photo__frame').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      openLightbox(Number(btn.dataset.index));
+    });
+  });
+
+  /* --- 图片加载失败（还没放照片）时，移除 img 让占位样式露出来 --- */
+  section.querySelectorAll('.photo__frame img').forEach(function (img) {
+    img.addEventListener('error', function () { img.remove(); });
+  });
+
+  return section;
+}
+
+/* ---------- 渲染整页 ---------- */
+function renderAlbum() {
+  const frag = document.createDocumentFragment();
+  ALBUM_DATA.forEach(function (group) {
+    frag.appendChild(buildYearSection(group));
+  });
+  albumRoot.appendChild(frag);
+
+  document.getElementById('statYears').textContent  = ALBUM_DATA.length + ' 个年份';
+  document.getElementById('statPhotos').textContent = FLAT_PHOTOS.length + ' 张照片';
+
+  // 默认全部折叠，按钮文字同步成「展开全部」
+  syncToggleAllLabel();
+}
+
+/* ============================================================
+   ③ 弹窗逻辑
+   ============================================================ */
+function openLightbox(index) {
+  currentIndex = index;
+  updateLightbox();
+  lightbox.classList.add('is-open');
+  lightbox.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('no-scroll');
+  lbClose.focus({ preventScroll: true });
+}
+
+function closeLightbox() {
+  lightbox.classList.remove('is-open');
+  lightbox.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('no-scroll');
+}
+
+function updateLightbox() {
+  const item = FLAT_PHOTOS[currentIndex];
+  if (!item) return;
+
+  lbImg.src = item.src;
+  lbImg.alt = item.note || (item.year + ' 的回忆');
+  lbDate.textContent = [item.year, item.date].filter(Boolean).join(' · ');
+  lbNote.textContent = item.note || '';
+  lbCount.textContent = (currentIndex + 1) + ' / ' + FLAT_PHOTOS.length;
+
+  // 到头了就禁用按钮（也可以改成循环切换）
+  lbPrev.disabled = currentIndex === 0;
+  lbNext.disabled = currentIndex === FLAT_PHOTOS.length - 1;
+
+  // 顺手预加载相邻两张，切换时不卡
+  [currentIndex + 1, currentIndex - 1].forEach(function (i) {
+    if (FLAT_PHOTOS[i]) { const pre = new Image(); pre.src = FLAT_PHOTOS[i].src; }
+  });
+}
+
+function showPrev() {
+  if (currentIndex > 0) { currentIndex--; updateLightbox(); }
+}
+function showNext() {
+  if (currentIndex < FLAT_PHOTOS.length - 1) { currentIndex++; updateLightbox(); }
+}
+
+/* 还没放照片时，弹窗里显示一块柔和的占位图，而不是浏览器默认的破图标 */
+const LB_PLACEHOLDER = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1100">' +
+    '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">' +
+      '<stop offset="0" stop-color="#f0e5df"/>' +
+      '<stop offset="0.55" stop-color="#e7ebe3"/>' +
+      '<stop offset="1" stop-color="#e4e9ef"/>' +
+    '</linearGradient></defs>' +
+    '<rect width="900" height="1100" fill="url(#g)"/>' +
+    '<text x="450" y="560" text-anchor="middle" font-family="sans-serif" ' +
+      'font-size="30" fill="#a89a93" letter-spacing="8">照片待添加</text>' +
+  '</svg>'
+);
+
+lbImg.addEventListener('error', function () {
+  if (lbImg.src !== LB_PLACEHOLDER) lbImg.src = LB_PLACEHOLDER;
+});
+
+/* 点击事件绑定 */
+lbClose.addEventListener('click', closeLightbox);
+lbPrev.addEventListener('click', showPrev);
+lbNext.addEventListener('click', showNext);
+
+// 点击图片以外的遮罩区域也能关闭
+lightbox.addEventListener('click', function (e) {
+  if (!e.target.closest('.lightbox__stage') && !e.target.closest('.lightbox__nav') && !e.target.closest('.lightbox__close')) {
+    closeLightbox();
+  }
+});
+
+// 键盘：Esc 关闭，左右方向键切换
+document.addEventListener('keydown', function (e) {
+  if (!lightbox.classList.contains('is-open')) return;
+  if (e.key === 'Escape')     closeLightbox();
+  if (e.key === 'ArrowLeft')  showPrev();
+  if (e.key === 'ArrowRight') showNext();
+});
+
+// 手机左右滑动切换
+let touchStartX = 0;
+lightbox.addEventListener('touchstart', function (e) {
+  touchStartX = e.changedTouches[0].clientX;
+}, { passive: true });
+
+lightbox.addEventListener('touchend', function (e) {
+  const delta = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(delta) < 55) return;            // 太小的滑动忽略，避免误触
+  if (delta > 0) showPrev(); else showNext();
+}, { passive: true });
+
+/* ============================================================
+   ④ 顶部「展开 / 收起全部」
+   ============================================================ */
+toggleAll.addEventListener('click', function () {
+  allCollapsed = !allCollapsed;
+  albumRoot.querySelectorAll('.year').forEach(function (section) {
+    section.classList.toggle('is-collapsed', allCollapsed);
+    section.querySelector('.year__head').setAttribute('aria-expanded', allCollapsed ? 'false' : 'true');
+  });
+  syncToggleAllLabel();
+});
+
+// 手动折叠某一两年后，按钮文字也要跟着变
+function syncToggleAllLabel() {
+  const sections = albumRoot.querySelectorAll('.year');
+  const collapsedCount = albumRoot.querySelectorAll('.year.is-collapsed').length;
+  allCollapsed = sections.length > 0 && collapsedCount === sections.length;
+  toggleAll.textContent = allCollapsed ? '展开全部' : '收起全部';
+}
+
+/* ============================================================
+   ⑤ 背景音乐逻辑（尽力自动播放）
+   ------------------------------------------------------------
+   浏览器对「有声自动播放」有限制，所以分三种情况处理：
+   1. 浏览器允许 → 打开页面就自动播放（之前访问过本站、或 Safari 放宽限制时常见）
+   2. 浏览器拦截 → 按钮外圈出现呼吸光晕，用户点一下/滑一下页面就立刻播放
+   3. 音频文件缺失 → 提示一句，不影响看照片
+   ============================================================ */
+const bgm      = document.getElementById('bgm');
+const musicBtn = document.getElementById('musicBtn');
+const toast    = document.getElementById('toast');
+let toastTimer = null;
+let autoplayTried = false;   // 是否已经尝试过自动播放
+let gestureBound  = false;   // 是否已经挂上「用户一动就播放」的监听
+
+// 默认音量 0.3（比较轻柔的背景音量）；想大声点改成 0.5，最大是 1
+bgm.volume = 0.3;
+
+// 顶部那个小提示条：显示 2.8 秒后自动淡出
+function showToast(text) {
+  toast.textContent = text;
+  toast.classList.add('is-show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () {
+    toast.classList.remove('is-show');
+  }, 2800);
+}
+
+/* ---------- 自动播放：先直接试，被拦下就等用户第一次操作 ---------- */
+function tryAutoplay() {
+  if (autoplayTried || !bgm.paused) return;
+  autoplayTried = true;
+  const playing = bgm.play();                 // 这一步可能被浏览器拒绝
+  if (playing && typeof playing.catch === 'function') {
+    playing.catch(function () { waitForGesture(); });
+  }
+}
+
+function waitForGesture() {
+  musicBtn.classList.add('is-invite');        // 光晕提示「点一下就有音乐」
+  if (gestureBound) return;
+  gestureBound = true;
+
+  // 任一操作都算「用户手势」：点按、触摸、按键、滚动
+  const events = ['pointerdown', 'touchstart', 'keydown', 'scroll'];
+  function startMusic() {
+    events.forEach(function (t) { window.removeEventListener(t, startMusic); });
+    if (bgm.paused) {
+      const p = bgm.play();
+      if (p && typeof p.catch === 'function') p.catch(function () {});
+    }
+  }
+  events.forEach(function (t) {
+    window.addEventListener(t, startMusic, { passive: true, once: true });
+  });
+}
+
+/* ---------- 手动点击按钮：播放 / 暂停 ---------- */
+musicBtn.addEventListener('click', function () {
+  if (!bgm.paused) {
+    bgm.pause();
+    return;
+  }
+  // play() 返回 Promise，失败（比如文件不存在、被浏览器拦截）时给个提示
+  const playing = bgm.play();
+  if (playing && typeof playing.catch === 'function') {
+    playing.catch(function () {
+      showToast('音乐没能播放，确认 audio/bgm.mp3 已放好');
+    });
+  }
+});
+
+// 播放 / 暂停时切换按钮图标与无障碍标签
+bgm.addEventListener('play', function () {
+  musicBtn.classList.remove('is-invite');     // 出声后就不需要提示了
+  musicBtn.classList.add('is-playing');
+  musicBtn.setAttribute('aria-pressed', 'true');
+  musicBtn.setAttribute('aria-label', '暂停背景音乐');
+});
+
+bgm.addEventListener('pause', function () {
+  musicBtn.classList.remove('is-playing');
+  musicBtn.setAttribute('aria-pressed', 'false');
+  musicBtn.setAttribute('aria-label', '播放背景音乐');
+});
+
+// 音频文件不存在或格式不对时提示一句，不影响看图
+bgm.addEventListener('error', function () {
+  musicBtn.classList.remove('is-playing');
+  showToast('没找到 audio/bgm.mp3，放进去就能听啦');
+});
+
+/* ---------- 启动 ---------- */
+renderAlbum();
+tryAutoplay();   // 进页面就尝试播放背景音乐（被浏览器拦下会自动等用户操作）
+</script>
+</body>
+</html>
