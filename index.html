@@ -880,6 +880,17 @@ function esc(str) {
     .replace(/"/g, '&quot;');
 }
 
+/* ------------------------------------------------------------------
+   小工具：由原图路径推出「网格缩略图」路径 —— 手机加载更快
+   images/2026/01.jpg  →  images/2026/01-s.jpg
+   缩略图是我用脚本按同一批照片生成的（长边 640，约 44KB）。
+   如果你以后自己加了一张新照片却没有 -s.jpg，页面会自动回退用原图，
+   不会出现破图（html 里那个 onerror 就是干这个的）。
+   ------------------------------------------------------------------ */
+function thumbOf(src) {
+  return String(src).replace(/\.(jpe?g|png)$/i, '-s.$1');
+}
+
 /* ---------- 渲染一个年份区块 ---------- */
 function buildYearSection(group) {
   const photos = group.photos || [];
@@ -910,8 +921,12 @@ function buildYearSection(group) {
             '</svg>' +
             '<span>照片待添加</span>' +
           '</span>' +
-          '<img src="' + esc(photo.src) + '" alt="' + esc(note || (group.year + ' 的回忆')) + '" ' +
-               'loading="lazy" decoding="async">' +
+          '<img src="' + esc(thumbOf(photo.src)) + '" ' +
+               'data-full="' + esc(photo.src) + '" ' +
+               'alt="' + esc(note || (group.year + ' 的回忆')) + '" ' +
+               'loading="lazy" decoding="async" ' +
+               // 缩略图不存在时（比如你新加的照片还没生成 -s.jpg）自动换回原图
+               'onerror="this.onerror=null;this.src=this.dataset.full;">' +
           '<span class="photo__zoom" aria-hidden="true">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">' +
               '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>' +
@@ -1004,8 +1019,23 @@ function updateLightbox() {
   const item = FLAT_PHOTOS[currentIndex];
   if (!item) return;
 
-  lbImg.src = item.src;
+  const full  = item.src;
+  const thumb = thumbOf(full);
+
+  // 先显示网格里已经缓存好的缩略图 —— 点开瞬间就有画面，不会白屏等大图
+  lbImg.src = thumb;
   lbImg.alt = item.note || (item.year + ' 的回忆');
+
+  // 大图在后台下载，下好了再替换上去（同一张图不重复下载）
+  if (lbImg.dataset.full !== full) {
+    lbImg.dataset.full = full;
+    const big = new Image();
+    big.onload = function () {
+      if (lbImg.dataset.full === full) lbImg.src = full;
+    };
+    big.src = full;
+  }
+
   lbDate.textContent = [item.year, item.date].filter(Boolean).join(' · ');
   lbNote.textContent = item.note || '';
   lbCount.textContent = (currentIndex + 1) + ' / ' + FLAT_PHOTOS.length;
@@ -1191,7 +1221,15 @@ bgm.addEventListener('error', function () {
 
 /* ---------- 启动 ---------- */
 renderAlbum();
-tryAutoplay();   // 进页面就尝试播放背景音乐（被浏览器拦下会自动等用户操作）
+
+// 背景音乐等页面本身加载完再自动播放：
+// 避免 4MB 的 mp3 和照片抢网速（手机上尤其明显，照片会快很多）
+// 不想等就把下面三行换成一句：tryAutoplay();
+if (document.readyState === 'complete') {
+  tryAutoplay();
+} else {
+  window.addEventListener('load', function () { tryAutoplay(); });
+}
 </script>
 </body>
 </html>
